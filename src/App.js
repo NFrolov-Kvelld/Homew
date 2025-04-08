@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useOptimistic } from "react";
 import DataSet from "./DataSet";
-import "./App.css"; // Импортируем файл стилей
+import "./App.css";
 
 function App() {
   const [data, setData] = useState([]);
@@ -11,6 +11,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedRows, setSelectedRows] = useState([]);
+  const [editingRow, setEditingRow] = useState(null);
 
   useEffect(() => {
     fetch("https://jsonplaceholder.typicode.com/comments")
@@ -32,7 +33,19 @@ function App() {
     { key: "body", header: "Body" },
   ];
 
-  const renderItem = (item, column) => item[column.key];
+  const renderItem = (item, column, index, onChange) => {
+    if (editingRow === index) {
+      return (
+        <input
+          type="text"
+          value={item[column.key]}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      );
+    }
+    return item[column.key];
+  };
+
   const renderHeader = (column) => column.header;
 
   const handleAdd = () => {
@@ -115,6 +128,19 @@ function App() {
         console.error(`Error updating item with id ${updatedItem.id}:`, error);
         setOptimisticData(data); // Откат изменений
       });
+
+    setEditingRow(null);
+  };
+
+  const handleEdit = (index) => {
+    setEditingRow(index);
+  };
+
+  const handleItemChange = (index, columnKey, value) => {
+    const updatedData = optimisticData.map((item, i) =>
+      i === index ? { ...item, [columnKey]: value } : item
+    );
+    setOptimisticData(updatedData);
   };
 
   return (
@@ -138,6 +164,10 @@ function App() {
         renderHeader={renderHeader}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
+        onEdit={handleEdit}
+        onUpdate={handleUpdate}
+        onItemChange={handleItemChange}
+        editingRow={editingRow}
       />
     </div>
   );

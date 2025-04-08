@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 
 function DataSet({
   data,
@@ -7,7 +7,13 @@ function DataSet({
   renderHeader,
   selectedRows,
   setSelectedRows,
+  onEdit,
+  onUpdate,
+  onItemChange,
+  editingRow,
 }) {
+  const [editedItems, setEditedItems] = useState({});
+
   const handleRowClick = useCallback(
     (index, event) => {
       if (event.ctrlKey) {
@@ -30,6 +36,16 @@ function DataSet({
     [selectedRows]
   );
 
+  const handleItemChangeLocal = (index, columnKey, value) => {
+    setEditedItems((prevEditedItems) => ({
+      ...prevEditedItems,
+      [index]: {
+        ...prevEditedItems[index],
+        [columnKey]: value,
+      },
+    }));
+  };
+
   return (
     <table>
       <thead>
@@ -38,6 +54,7 @@ function DataSet({
           {columns.map((column, index) => (
             <th key={index}>{renderHeader(column)}</th>
           ))}
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -57,8 +74,26 @@ function DataSet({
               />
             </td>
             {columns.map((column, columnIndex) => (
-              <td key={columnIndex}>{renderItem(item, column)}</td>
+              <td key={columnIndex}>
+                {renderItem(
+                  editedItems[index] ? editedItems[index] : item,
+                  column,
+                  index,
+                  (value) => handleItemChangeLocal(index, column.key, value)
+                )}
+              </td>
             ))}
+            <td>
+              {editingRow === index ? (
+                <button
+                  onClick={() => onUpdate(index, editedItems[index] || item)}
+                >
+                  Save
+                </button>
+              ) : (
+                <button onClick={() => onEdit(index)}>Edit</button>
+              )}
+            </td>
           </tr>
         ))}
       </tbody>
